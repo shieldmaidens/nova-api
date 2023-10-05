@@ -7,5 +7,5 @@ EOF
 
 cd rust || exit
 
-cargo login --registry gitea ""
+cargo login --registry gitea "${CARGO_REPOSITORIES_GITEA_TOKEN}"
 cargo publish --registry gitea
