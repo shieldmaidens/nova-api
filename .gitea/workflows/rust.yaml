@@ -1,0 +1,19 @@
+name: Rust
+
+on:
+  - pull-request
+  - push
+
+jobs:
+  build:
+    strategy:
+        matrix:
+            os: [ubuntu-latest, ubuntu-22.04]
+    runs-on: "${{ matrix.os }}"
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cd rust
+      - run: cargo install protoc-gen-prost-crate
+      - run: cargo build --all-targets --all-features
