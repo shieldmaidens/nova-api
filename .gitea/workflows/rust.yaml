@@ -5,23 +5,25 @@ on:
   - push
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install protoc-gen-prost-crate
-      - run: |
-          cd rust
-          cargo build --all-targets --all-features
+  # build:
+  #   runs-on: ubuntu-22.04
+  #   timeout-minutes: 60
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - run: cargo install protoc-gen-prost-crate
+  #     - run: |
+  #         cd rust
+  #         cargo build --all-targets --all-features
   publish:
     runs-on: ubuntu-latest
-    needs: build
+    # needs: build
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/mainline'
+    # if: github.ref == 'refs/heads/mainline'
+    env:
+      CARGO_REPOSITORIES_GITEA_TOKEN: ${{ secrets.CARGO_REPOSITORIES_GITEA_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - run: |
-          cargo publish --registry gitea
+          ./publish.sh

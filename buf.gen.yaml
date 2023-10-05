@@ -17,7 +17,6 @@ plugins:
       - compile_well_known_types
       - extern_path=.google.protobuf=::pbjson_types
   - plugin: prost-crate
-    path: /Users/sienna/.cargo/bin/protoc-gen-prost-crate
     out: rust
     strategy: all
     opt:
