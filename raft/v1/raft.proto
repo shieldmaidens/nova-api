@@ -17,6 +17,11 @@
 syntax = "proto3";
 package raft.v1;
 
+option go_package = "raft.v1";
+
+import "rustproto.proto";
+option (rustproto.carllerche_bytes_for_bytes_all) = true;
+
 enum EntryType {
     EntryNormal = 0;
     EntryConfChange = 1;
