@@ -1,10 +1,9 @@
 [package]
 name = "nova-api"
-authors = ["Sienna Lloyd <sienna@r3t.io>", "Pleiades Authors"]
+authors = ["Sienna Lloyd", "Pleiades Authors"]
 description = "Protocol buffers, API definitions, and generated code for the Nova Engine"
 license = "GPL-3.0-only"
-repository = "https://git.r3t.io/nova-engine/api"
-homepage = "nova-engine.io"
+repository = "https://review.r3t.io/nova-engine/api"
 version = "0.1.1"
 edition = "2021"
 publish = true
