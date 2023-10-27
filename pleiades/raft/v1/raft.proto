@@ -1,0 +1,231 @@
+/*
+ *   Pleiades Source Code
+ *   Copyright (C) 2023 Sienna Lloyd, Pleiades Authors
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+package raft.v1;
+
+import "google/rpc/status.proto";
+
+option go_package = "github.com/mxplusb/pleiades/api/v1/raft";
+
+message LogId {
+  CommittedLeaderId leader_id = 1;
+  uint64 index = 2;
+}
+
+message CommittedLeaderId {
+  uint64 term = 1;
+  uint64 node_id = 2;
+}
+
+message LeaderId {
+  uint64 term = 1;
+  uint64 node_id = 2;
+}
+
+message Vote {
+  LeaderId leader_id = 1;
+  bool committed = 2;
+}
+
+message VoteRequest {
+  Vote vote = 1;
+  LogId last_log_id = 2;
+}
+
+// The response to a `VoteRequest`
+message VoteResponse {
+  // vote after a node handling vote-request.
+  // Thus `resp.vote >= req.vote` always holds.
+  Vote vote = 1;
+  // Will be true if the candidate received a vote from the responder.
+  bool vote_granted = 2;
+  // The last log id stored on the remote voter.
+  optional LogId last_log_id = 3;
+}
+
+// Sent by the Raft leader to send chunks of a snapshot to a follower
+message InstallSnapshotRequest {
+  Vote vote = 1;
+  // Metadata of a snapshot: snapshot_id, last_log_ed membership etc.
+  SnapshotMetadata metadata = 2;
+  // The byte offset where this chunk of data is positioned in the snapshot file.
+  uint64 offset = 3;
+  // The raw bytes of the snapshot chunk, starting at `offset`.
+  bytes data = 4;
+  // Will be `true` if this is the last chunk in the snapshot.
+  bool done = 5;
+}
+
+// The response to an `InstallSnapshotRequest`
+message InstallSnapshotResponse {
+  Vote vote = 1;
+}
+
+// Metadata regarding a snapshot
+message SnapshotMetadata {
+  // Log entries upto which this snapshot includes, inclusive.
+  optional LogId last_log_id = 1;
+  // The last applied membership config.
+  StoredMembership last_membership = 2;
+  // To identify a snapshot when transferring.
+  // Caveat: even when two snapshot is built with the same `last_log_id`, they still could be
+  // different in bytes.
+  string snapshot_id = 3;
+}
+
+// This struct represents information about a membership config that has already been stored in the
+// raft logs.
+//
+// It includes log id and a membership config. Such a record is used in the state machine or
+// snapshot to track the last membership and its log id. And it is also used as a return value for
+// functions that return membership and its log position.
+message StoredMembership {
+  // The id of the log that stores this membership config
+  optional LogId log_id = 1;
+  // Membership config
+  Membership membership = 2;
+}
+
+// The membership configuration of the cluster.
+//
+// It could be a joint of one, two or more configs, i.e., a quorum is a node set that is superset
+// of a majority of every config.
+message Membership {
+  // A node-id key that is in `nodes` but is not in `configs` is a **learner**.
+  repeated uint64 configs = 1;
+  // Additional info of all nodes, e.g., the connecting host and port.
+  map<uint64, HostNode> nodes = 2;
+}
+
+// Information about the host node.
+message HostNode {
+  string addr = 1;
+}
+
+// Sent by a cluster leader to replicate log entries (§5.3), and as a heartbeat (§5.2).
+message AppendEntriesRequest {
+  Vote vote = 1;
+  optional LogId prev_log_id = 2;
+  // The new log entries to store.
+  //
+  // This may be empty when the leader is sending heartbeats. Entries
+  // are batched for efficiency.
+  repeated Entry entries = 3;
+  // The leader's committed log id.
+  optional LogId leader_commit = 4;
+}
+
+// The response to an `AppendEntriesRequest`.
+message AppendEntriesResponse {
+  oneof response {
+    Success success = 1;
+    Conflict conflict = 2;
+    // Seen a vote `v` that does not hold `mine_vote >= v`.
+    // And a leader's vote(committed vote) must be total order with other vote.
+    // Therefore it has to be a higher vote: `mine_vote < v`
+    Vote higher_vote = 3;
+  }
+}
+
+message Success {}
+message Conflict {}
+
+message Entry {
+  LogId log_id = 1;
+  // This entry's payload.
+  // todo (sienna): this should actually be a oneof
+  oneof payload {
+    Blank blank = 2;
+    RaftEntryRequest normal = 3;
+    Membership membership = 4;
+  }
+}
+
+message Blank {}
+
+message RaftEntryRequest {
+  oneof request {
+    RaftGetKeyRequest get_key = 1;
+    RaftPutKeyRequest put_key = 2;
+    RaftDeleteKeyRequest delete_key = 3;
+  }
+}
+
+message RaftEntryResponse {
+  oneof response {
+    RaftGetKeyResponse get_key = 1;
+    RaftPutKeyResponse put_key = 2;
+    RaftDeleteKeyResponse delete_key = 3;
+  }
+}
+
+message RaftGetKeyRequest {
+  bytes range = 1;
+  bytes key = 2;
+  optional uint64 version = 3;
+}
+
+message RaftGetKeyResponse {
+  google.rpc.Status status = 1;
+  optional KeyValuePair kvp = 2;
+}
+
+message RaftPutKeyRequest {
+  bytes range = 1;
+  KeyValuePair kvp = 2;
+}
+
+message RaftPutKeyResponse {
+  google.rpc.Status status = 1;
+}
+
+message RaftDeleteKeyRequest {
+  bytes range = 1;
+  bytes key = 2;
+}
+
+message RaftDeleteKeyResponse {
+  google.rpc.Status status = 1;
+}
+
+// A core key-value pair. A key-value pair is a key, a value, and some metadata.
+message KeyValuePair {
+  // key is the key in bytes. An empty key is not allowed.
+  bytes key = 1;
+  // create_revision is the revision of last creation on this key.
+  uint64 create_revision = 2;
+  // mod_revision is the revision of last modification on this key.
+  uint64 mod_revision = 3;
+  // version is the version of the key. A deletion resets
+  // the version to zero and any modification of the key
+  // increases its version.
+  uint64 version = 4;
+  // value is the value held by the key, in bytes.
+  bytes value = 5;
+  // lease is the ID of the lease that attached to key.
+  // When the attached lease expires, the key will be deleted.
+  // If lease is 0, then no lease is attached to the key.
+  uint64 lease = 6;
+}
+
+service RaftService {
+  rpc Vote(VoteRequest) returns (VoteResponse) {}
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse) {}
+  rpc InstallSnapshot(InstallSnapshotRequest) returns (InstallSnapshotResponse) {}
+}

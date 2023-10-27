@@ -5,3 +5,26 @@ plugins:
   - plugin: buf.build/protocolbuffers/go
     opt: paths=source_relative
     out: go
+  - plugin: prost
+    out: rust/src
+    opt:
+      - bytes=.
+      - btree_map=.
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+      - file_descriptor_set
+  - plugin: prost-serde
+    out: rust/src
+    opt:
+      - btree_map=.
+      - extern_path=.google.protobuf=::pbjson_types
+  - plugin: tonic
+    out: rust/src
+    opt:
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+  - plugin: prost-crate
+    out: rust
+    strategy: all
+    opt:
+      - gen_crate=Cargo.toml.template

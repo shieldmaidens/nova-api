@@ -1,0 +1,39 @@
+/*
+ *   Pleiades Source Code
+ *   Copyright (C) 2023 Sienna Lloyd, Pleiades Authors
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+package raft.v1;
+
+option go_package = "github.com/mxplusb/pleiades/api/v1/raft";
+
+enum ColumnFamilyType {
+  COLUMN_FAMILY_TYPE_UNSPECIFIED = 0;
+  COLUMN_FAMILY_TYPE_CONFIG = 1;
+  COLUMN_FAMILY_TYPE_RAFT_LOG = 2;
+  COLUMN_FAMILY_TYPE_DATA = 3;
+}
+
+message ColumnFamilies {
+  repeated ColumnFamilyDescriptor column_families = 1;
+}
+
+message ColumnFamilyDescriptor {
+  uint64 range = 1;
+  uint64 shard = 2;
+  ColumnFamilyType type = 3;
+}
