@@ -1,7 +1,7 @@
 # Nova Engine API
 
-Here are the API definitions and generated code for the various APIs that make up Nova.
+Here are the API definitions and generated code for the various APIs that make up Nova and it's encompassed projects.
 
-## Generating Code
+# Documentation
 
-Nova uses [`buf`](https://buf.build) for it's protobuf generators. You can find examples on how to use Buf on their website or in the [wiki](https://wiki.r3t.io).
+You can find all our documentation on our [wiki](https://shieldmaidens.wikiforge.net/Main_Page)!
