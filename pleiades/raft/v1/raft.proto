@@ -19,6 +19,7 @@
 syntax = "proto3";
 package raft.v1;
 
+import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
 
 option go_package = "github.com/mxplusb/pleiades/api/v1/raft";
@@ -204,9 +205,17 @@ message RaftDeleteKeyResponse {
   google.rpc.Status status = 1;
 }
 
+enum RaftCachePolicy {
+  // The default cache policy, which is to cache the value in the local node.
+  RAFT_CACHE_POLICY_UNSPECIFIED = 0;
+  // Do not cache the value in memory
+  RAFT_CACHE_POLICY_NO_CACHE = 1;
+}
+
 message MetaKeyValuePair {
   uint64 shard = 1;
   KeyValuePair kvp = 2;
+  optional RaftCachePolicy cache_policy = 3;
 }
 
 // A core key-value pair. A key-value pair is a key, a value, and some metadata.

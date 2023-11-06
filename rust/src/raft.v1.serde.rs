@@ -1850,12 +1850,20 @@ impl serde::Serialize for MetaKeyValuePair {
         if self.kvp.is_some() {
             len += 1;
         }
+        if self.cache_policy.is_some() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("raft.v1.MetaKeyValuePair", len)?;
         if self.shard != 0 {
             struct_ser.serialize_field("shard", ToString::to_string(&self.shard).as_str())?;
         }
         if let Some(v) = self.kvp.as_ref() {
             struct_ser.serialize_field("kvp", v)?;
+        }
+        if let Some(v) = self.cache_policy.as_ref() {
+            let v = RaftCachePolicy::from_i32(*v)
+                .ok_or_else(|| serde::ser::Error::custom(format!("Invalid variant {}", *v)))?;
+            struct_ser.serialize_field("cachePolicy", &v)?;
         }
         struct_ser.end()
     }
@@ -1869,12 +1877,15 @@ impl<'de> serde::Deserialize<'de> for MetaKeyValuePair {
         const FIELDS: &[&str] = &[
             "shard",
             "kvp",
+            "cache_policy",
+            "cachePolicy",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             Shard,
             Kvp,
+            CachePolicy,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -1898,6 +1909,7 @@ impl<'de> serde::Deserialize<'de> for MetaKeyValuePair {
                         match value {
                             "shard" => Ok(GeneratedField::Shard),
                             "kvp" => Ok(GeneratedField::Kvp),
+                            "cachePolicy" | "cache_policy" => Ok(GeneratedField::CachePolicy),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -1919,6 +1931,7 @@ impl<'de> serde::Deserialize<'de> for MetaKeyValuePair {
             {
                 let mut shard__ = None;
                 let mut kvp__ = None;
+                let mut cache_policy__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::Shard => {
@@ -1935,15 +1948,95 @@ impl<'de> serde::Deserialize<'de> for MetaKeyValuePair {
                             }
                             kvp__ = map.next_value()?;
                         }
+                        GeneratedField::CachePolicy => {
+                            if cache_policy__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("cachePolicy"));
+                            }
+                            cache_policy__ = map.next_value::<::std::option::Option<RaftCachePolicy>>()?.map(|x| x as i32);
+                        }
                     }
                 }
                 Ok(MetaKeyValuePair {
                     shard: shard__.unwrap_or_default(),
                     kvp: kvp__,
+                    cache_policy: cache_policy__,
                 })
             }
         }
         deserializer.deserialize_struct("raft.v1.MetaKeyValuePair", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for RaftCachePolicy {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let variant = match self {
+            Self::Unspecified => "RAFT_CACHE_POLICY_UNSPECIFIED",
+            Self::NoCache => "RAFT_CACHE_POLICY_NO_CACHE",
+        };
+        serializer.serialize_str(variant)
+    }
+}
+impl<'de> serde::Deserialize<'de> for RaftCachePolicy {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "RAFT_CACHE_POLICY_UNSPECIFIED",
+            "RAFT_CACHE_POLICY_NO_CACHE",
+        ];
+
+        struct GeneratedVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = RaftCachePolicy;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(formatter, "expected one of: {:?}", &FIELDS)
+            }
+
+            fn visit_i64<E>(self, v: i64) -> std::result::Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                use std::convert::TryFrom;
+                i32::try_from(v)
+                    .ok()
+                    .and_then(RaftCachePolicy::from_i32)
+                    .ok_or_else(|| {
+                        serde::de::Error::invalid_value(serde::de::Unexpected::Signed(v), &self)
+                    })
+            }
+
+            fn visit_u64<E>(self, v: u64) -> std::result::Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                use std::convert::TryFrom;
+                i32::try_from(v)
+                    .ok()
+                    .and_then(RaftCachePolicy::from_i32)
+                    .ok_or_else(|| {
+                        serde::de::Error::invalid_value(serde::de::Unexpected::Unsigned(v), &self)
+                    })
+            }
+
+            fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                match value {
+                    "RAFT_CACHE_POLICY_UNSPECIFIED" => Ok(RaftCachePolicy::Unspecified),
+                    "RAFT_CACHE_POLICY_NO_CACHE" => Ok(RaftCachePolicy::NoCache),
+                    _ => Err(serde::de::Error::unknown_variant(value, FIELDS)),
+                }
+            }
+        }
+        deserializer.deserialize_any(GeneratedVisitor)
     }
 }
 impl serde::Serialize for RaftDeleteKeyRequest {
