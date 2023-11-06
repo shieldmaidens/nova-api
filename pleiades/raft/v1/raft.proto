@@ -204,6 +204,11 @@ message RaftDeleteKeyResponse {
   google.rpc.Status status = 1;
 }
 
+message MetaKeyValuePair {
+  uint64 shard = 1;
+  KeyValuePair kvp = 2;
+}
+
 // A core key-value pair. A key-value pair is a key, a value, and some metadata.
 message KeyValuePair {
   // key is the key in bytes. An empty key is not allowed.
