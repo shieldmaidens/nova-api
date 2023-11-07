@@ -26,6 +26,7 @@ enum ColumnFamilyType {
   COLUMN_FAMILY_TYPE_CONFIG = 1;
   COLUMN_FAMILY_TYPE_RAFT_LOG = 2;
   COLUMN_FAMILY_TYPE_DATA = 3;
+  COLUMN_FAMILY_TYPE_VOTE = 4;
 }
 
 message ColumnFamilies {

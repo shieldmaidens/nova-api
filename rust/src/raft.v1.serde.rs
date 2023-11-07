@@ -571,6 +571,7 @@ impl serde::Serialize for ColumnFamilyType {
             Self::Config => "COLUMN_FAMILY_TYPE_CONFIG",
             Self::RaftLog => "COLUMN_FAMILY_TYPE_RAFT_LOG",
             Self::Data => "COLUMN_FAMILY_TYPE_DATA",
+            Self::Vote => "COLUMN_FAMILY_TYPE_VOTE",
         };
         serializer.serialize_str(variant)
     }
@@ -586,6 +587,7 @@ impl<'de> serde::Deserialize<'de> for ColumnFamilyType {
             "COLUMN_FAMILY_TYPE_CONFIG",
             "COLUMN_FAMILY_TYPE_RAFT_LOG",
             "COLUMN_FAMILY_TYPE_DATA",
+            "COLUMN_FAMILY_TYPE_VOTE",
         ];
 
         struct GeneratedVisitor;
@@ -632,6 +634,7 @@ impl<'de> serde::Deserialize<'de> for ColumnFamilyType {
                     "COLUMN_FAMILY_TYPE_CONFIG" => Ok(ColumnFamilyType::Config),
                     "COLUMN_FAMILY_TYPE_RAFT_LOG" => Ok(ColumnFamilyType::RaftLog),
                     "COLUMN_FAMILY_TYPE_DATA" => Ok(ColumnFamilyType::Data),
+                    "COLUMN_FAMILY_TYPE_VOTE" => Ok(ColumnFamilyType::Vote),
                     _ => Err(serde::de::Error::unknown_variant(value, FIELDS)),
                 }
             }
@@ -1722,6 +1725,116 @@ impl<'de> serde::Deserialize<'de> for LogId {
         deserializer.deserialize_struct("raft.v1.LogId", FIELDS, GeneratedVisitor)
     }
 }
+impl serde::Serialize for LogState {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.last_purged_log_id.is_some() {
+            len += 1;
+        }
+        if self.last_log_id.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("raft.v1.LogState", len)?;
+        if let Some(v) = self.last_purged_log_id.as_ref() {
+            struct_ser.serialize_field("lastPurgedLogId", v)?;
+        }
+        if let Some(v) = self.last_log_id.as_ref() {
+            struct_ser.serialize_field("lastLogId", v)?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for LogState {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "last_purged_log_id",
+            "lastPurgedLogId",
+            "last_log_id",
+            "lastLogId",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            LastPurgedLogId,
+            LastLogId,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "lastPurgedLogId" | "last_purged_log_id" => Ok(GeneratedField::LastPurgedLogId),
+                            "lastLogId" | "last_log_id" => Ok(GeneratedField::LastLogId),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = LogState;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct raft.v1.LogState")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<LogState, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut last_purged_log_id__ = None;
+                let mut last_log_id__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::LastPurgedLogId => {
+                            if last_purged_log_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("lastPurgedLogId"));
+                            }
+                            last_purged_log_id__ = map.next_value()?;
+                        }
+                        GeneratedField::LastLogId => {
+                            if last_log_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("lastLogId"));
+                            }
+                            last_log_id__ = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(LogState {
+                    last_purged_log_id: last_purged_log_id__,
+                    last_log_id: last_log_id__,
+                })
+            }
+        }
+        deserializer.deserialize_struct("raft.v1.LogState", FIELDS, GeneratedVisitor)
+    }
+}
 impl serde::Serialize for Membership {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
@@ -1964,6 +2077,229 @@ impl<'de> serde::Deserialize<'de> for MetaKeyValuePair {
             }
         }
         deserializer.deserialize_struct("raft.v1.MetaKeyValuePair", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for MetaLogId {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.shard_id != 0 {
+            len += 1;
+        }
+        if self.log_id.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("raft.v1.MetaLogId", len)?;
+        if self.shard_id != 0 {
+            struct_ser.serialize_field("shardId", ToString::to_string(&self.shard_id).as_str())?;
+        }
+        if let Some(v) = self.log_id.as_ref() {
+            struct_ser.serialize_field("logId", v)?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for MetaLogId {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "shard_id",
+            "shardId",
+            "log_id",
+            "logId",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            ShardId,
+            LogId,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "shardId" | "shard_id" => Ok(GeneratedField::ShardId),
+                            "logId" | "log_id" => Ok(GeneratedField::LogId),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = MetaLogId;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct raft.v1.MetaLogId")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<MetaLogId, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut shard_id__ = None;
+                let mut log_id__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::ShardId => {
+                            if shard_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("shardId"));
+                            }
+                            shard_id__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::LogId => {
+                            if log_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("logId"));
+                            }
+                            log_id__ = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(MetaLogId {
+                    shard_id: shard_id__.unwrap_or_default(),
+                    log_id: log_id__,
+                })
+            }
+        }
+        deserializer.deserialize_struct("raft.v1.MetaLogId", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for MetaVote {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.shard_id != 0 {
+            len += 1;
+        }
+        if self.vote.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("raft.v1.MetaVote", len)?;
+        if self.shard_id != 0 {
+            struct_ser.serialize_field("shardId", ToString::to_string(&self.shard_id).as_str())?;
+        }
+        if let Some(v) = self.vote.as_ref() {
+            struct_ser.serialize_field("vote", v)?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for MetaVote {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "shard_id",
+            "shardId",
+            "vote",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            ShardId,
+            Vote,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "shardId" | "shard_id" => Ok(GeneratedField::ShardId),
+                            "vote" => Ok(GeneratedField::Vote),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = MetaVote;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct raft.v1.MetaVote")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<MetaVote, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut shard_id__ = None;
+                let mut vote__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::ShardId => {
+                            if shard_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("shardId"));
+                            }
+                            shard_id__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::Vote => {
+                            if vote__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("vote"));
+                            }
+                            vote__ = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(MetaVote {
+                    shard_id: shard_id__.unwrap_or_default(),
+                    vote: vote__,
+                })
+            }
+        }
+        deserializer.deserialize_struct("raft.v1.MetaVote", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for RaftCachePolicy {
